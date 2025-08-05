@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Home Energy Monitoring and Management System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="greeting">
+        <h1>Welcome back...</h1>
+        <p>Your home energy at a glance</p>
+      </div>
+      <div class="status" id="connectionStatus">
+        <div class="status-indicator"></div>
+        <span>Disconnected</span>
+      </div>
+    </header>
+
+    <div class="dashboard">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Voltage</span>
+          <span class="card-icon">⚡</span>
+        </div>
+        <div class="card-value" id="voltage">0.00</div>
+        <span class="card-unit">Volts</span>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Current</span>
+          <span class="card-icon">🔌</span>
+        </div>
+        <div class="card-value" id="current">0.00</div>
+        <span class="card-unit">Amps</span>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Power</span>
+          <span class="card-icon">📊</span>
+        </div>
+        <div class="card-value" id="power">0.00</div>
+        <span class="card-unit">Watts</span>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Energy</span>
+          <span class="card-icon">🔋</span>
+        </div>
+        <div class="card-value" id="energy">0.00</div>
+        <span class="card-unit">kWh</span>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Frequency</span>
+          <span class="card-icon">🔄</span>
+        </div>
+        <div class="card-value" id="frequency">0.00</div>
+        <span class="card-unit">Hz</span>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Power Factor</span>
+          <span class="card-icon">📐</span>
+        </div>
+        <div class="card-value" id="powerFactor">0.00</div>
+        <span class="card-unit">Ratio</span>
+      </div>
+      
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Carbon Footprint</span>
+          <span class="card-icon">🌍</span>
+        </div>
+        <div class="card-value" id="carbonEmission">0.00</div>
+        <span class="card-unit">kg CO2e</span>
+      </div>
+
+      <div class="card system-status-card">
+        <div class="card-header">
+          <span class="card-title">System Status</span>
+          <span class="card-icon">🌿</span>
+        </div>
+        <div class="status-content">
+          <div class="status-indicator-large">
+            <div class="semi-circle">
+              <div class="semi-circle-fill" id="statusIndicator"></div>
+            </div>
+          </div>
+          <div class="status-text">
+            <div class="status-title" id="statusTitle">System Initializing</div>
+            <div class="status-message" id="statusMessage">Waiting for data...</div>
+            <div class="carbon-info">
+              <div class="carbon-item">
+                <div class="carbon-badge" id="carbonStatus"></div>
+                <span>Carbon Footprint</span>
+              </div>
+              <div class="carbon-item">
+                <div class="carbon-badge" id="airStatus"></div>
+                <span>Air Quality</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Relay Controls Section -->
+    <div class="controls-section">
+      <h3 class="section-title">Device Status</h3>
+      <div class="controls" id="relayControls">
+        <div class="control-card" id="mainsStatusCard">
+          <div class="power-icon">⚡</div>
+          <h3 class="control-title">Meter State</h3>
+          <div class="status-message" id="mainsStatusMessage">Checking status...</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="section-divider">
+    
+    <!-- Energy Chart Section -->
+    <div class="chart-section">
+      <h3 class="section-title">Energy Consumption History</h3>
+      <div class="chart-header">
+        <h3 class="chart-title">Historical Energy Usage</h3>
+        <div class="time-range-selector" id="energy-range">
+          <button class="time-range-btn active" data-range="24">Last 24h</button>
+          <button class="time-range-btn" data-range="168">Last 7d</button>
+          <button class="time-range-btn" data-range="672">Last 4w</button>
+        </div>
+      </div>
+      <div class="chart-container"><canvas id="energyChart"></canvas></div>
+    </div>
+
+    <hr class="section-divider">
+    
+    <!-- Carbon Emission Chart Section -->
+    <div class="chart-section">
+      <h3 class="section-title">Carbon Footprint History</h3>
+      <div class="chart-header">
+        <h3 class="chart-title">Historical Carbon Footprint</h3>
+        <div class="time-range-selector" id="carbon-range">
+          <button class="time-range-btn active" data-range="24">Last 24h</button>
+          <button class="time-range-btn" data-range="168">Last 7d</button>
+          <button class="time-range-btn" data-range="672">Last 4w</button>
+        </div>
+      </div>
+      <div class="chart-container"><canvas id="carbonChart"></canvas></div>
+    </div>
+  </div>
+  
+  <footer>
+    IoT Real-Time Smart Energy Meter for Real-Time Carbon Emission Visualization
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
